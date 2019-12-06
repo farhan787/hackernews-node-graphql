@@ -8,23 +8,42 @@ const links = [
   }
 ];
 
-const typeDefs = `
-type Query {
-    info: String!
-    feed: [Link!]!
-}
-
-type Link {
-    id: ID!
-    description: String!
-    url: String!
-}
-`;
+let linksCount = links.length;
 
 const resolvers = {
   Query: {
     info: () => `This is the API of a  Hackernews Clone`,
     feed: () => links
+  },
+
+  Mutation: {
+    post: (parent, args) => {
+      const link = {
+        id: `link-${linksCount++}`,
+        url: args.url,
+        description: args.description
+      };
+
+      links.push(link);
+      return link;
+    },
+
+    updateLink: (parent, args) => {
+      let linkIndex = links.findIndex(link => link.id == args.id);
+      if (linkIndex >= 0 && linkIndex < linksCount) {
+        if (args.description) links[linkIndex].description = args.description;
+        if (args.url) links[linkIndex].url = args.url;
+        return links[linkIndex];
+      }
+      return null;
+    },
+
+    deleteLink: (parent, args) => {
+      let linkIndex = links.findIndex(link => link.id == args.id);
+      let link = links[linkIndex];
+      if (linkIndex >= 0 && linkIndex < linksCount) links.splice(linkIndex, 1);
+      return link;
+    }
   },
 
   Link: {
@@ -35,7 +54,7 @@ const resolvers = {
 };
 
 const server = new GraphQLServer({
-  typeDefs,
+  typeDefs: './src/schema.graphql',
   resolvers
 });
 
